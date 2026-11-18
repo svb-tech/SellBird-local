@@ -13,7 +13,7 @@ There are no OpenAI, Anthropic, Gemini, Codex, or other paid/hosted AI inference
 | Deliverable | Link |
 |---|---|
 | GitHub Repository | https://github.com/svb-tech/SellBird-local |
-| Demo Video (Google Drive) | [https://drive.google.com/drive/folders/1YYlzhsOU4FnfVmDtlE1Vd48mEiJDYrKP] (PASTE_GOOGLE_DRIVE_LINK_HERE) |
+| Demo Video (Google Drive) | https://drive.google.com/drive/folders/1YYlzhsOU4FnfVmDtlE1Vd48mEiJDYrKP |
 
 ---
 
