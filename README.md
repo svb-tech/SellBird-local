@@ -19,8 +19,8 @@ There are no OpenAI, Anthropic, Gemini, Codex, or other paid/hosted AI inference
 
 ## Documentation
 
-- [Original Upstream README](README_UPSTREAM.md)
-- [Technical Documentation](docs/TECHNICAL_DOCUMENTATION.md)
+- [Original Upstream README](README.md)
+- [Technical Documentation](TECHNICAL_DOCUMENTATION.md)
 
 ---
 
