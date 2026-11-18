@@ -1,0 +1,5 @@
+# Extra packages for the local zero-cost sales agent (on top of requirements.txt).
+# sentence-transformers downloads its embedding model once from the HuggingFace Hub at install time;
+# afterwards it is loaded with local_files_only=True and works offline.
+sentence-transformers>=3.0,<6
+psutil>=5.9

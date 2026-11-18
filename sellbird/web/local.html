@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sellbird — Local Sales Agent</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--mut:#6b6b66;--line:#e2e0d8;--acc:#1f6f5c;--warn:#b4531a;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#161614;--card:#1f1f1c;--ink:#ecebe6;--mut:#9a9990;--line:#33332e;--acc:#4fb89e;--warn:#e08a4f;--bad:#f2837c}}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:14px 22px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+h1{font-size:17px;margin:0}main{padding:18px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{font-size:14px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:6px 11px;font-size:13px;cursor:pointer;margin:2px 4px 2px 0}
+button.s{background:transparent;color:var(--acc);border:1px solid var(--acc)}button:disabled{opacity:.5}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border-radius:6px;padding:8px;max-height:260px;overflow:auto;font-size:12px;margin:8px 0 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px}td,th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid var(--line)}
+.ok{color:var(--acc)}.warn{color:var(--warn)}.bad{color:var(--bad)}.mut{color:var(--mut)}
+textarea{width:100%;min-height:70px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px}
+select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px}
+.wide{grid-column:1/-1}.tier-A{color:var(--acc);font-weight:600}.tier-C{color:var(--mut)}
+</style></head><body>
+<header><h1>Sellbird · Local Sales Agent</h1><span id="st" class="mut">checking local AI…</span>
+<span id="net" class="pill mut">all inference on this machine · $0.00</span></header>
+<main>
+<section class="card"><h2>1 · Business &amp; products</h2>
+ <button onclick="act('/setup/load','POST',null,'out1')">Load company + prospect files</button>
+ <button onclick="act('/business/profile','POST',null,'out1')">Generate business profile</button>
+ <button class="s" onclick="loadProducts()">Refresh products</button>
+ <div id="products" class="mut" style="margin-top:8px"></div><pre id="out1">—</pre></section>
+
+<section class="card"><h2>2 · Product ICP</h2>
+ <select id="prod" onchange="refreshRank()"></select>
+ <button onclick="icp()">Generate ICP for product</button><pre id="out2">—</pre></section>
+
+<section class="card wide"><h2>3 · Prospect pipeline <span><label class="mut">prospects <input id="n" type="number" value="4" min="1" max="12" style="width:52px"></label>
+ <button onclick="runPipe()" id="pipebtn">Run research → signals → problem → score → emails</button></span></h2>
+ <div id="pipemsg" class="mut"></div><table id="rank"><thead><tr><th>#</th><th>Company</th><th>Contact</th><th>Score</th><th>Tier</th><th></th></tr></thead><tbody></tbody></table></section>
+
+<section class="card wide"><h2>Prospect detail <span class="mut" id="dname"></span></h2><pre id="detail">Select a prospect above.</pre></section>
+
+<section class="card"><h2>4 · Reply classification</h2>
+ <textarea id="reply" placeholder="Paste a prospect reply…">Sounds good, can we do a call on Thursday?</textarea>
+ <button onclick="classify()">Classify</button><button class="s" onclick="act('/replies/evaluate','POST',null,'out4')">Run 12 sample conversations</button><pre id="out4">—</pre></section>
+
+<section class="card"><h2>Task queue <button class="s" onclick="act('/queue/process','POST',null,'out5')">Process queue</button></h2>
+ <pre id="out5">Tasks queue here when Ollama is unreachable.</pre></section>
+
+<section class="card wide"><h2>Local inference log <button class="s" onclick="loadLog()">Refresh</button></h2>
+ <table id="log"><thead><tr><th>time</th><th>workflow</th><th>endpoint</th><th>model</th><th>tokens in/out</th><th>tok/s</th><th>latency</th><th>cost</th><th>ok</th></tr></thead><tbody></tbody></table></section>
+</main>
+<script>
+const B=location.pathname.startsWith('/api/local')||location.pathname==='/local'?'/api/local':'/api/local';
+const $=id=>document.getElementById(id);let PRODS=[];
+const TK='sellbird-dashboard-token';
+(function(){const t=new URLSearchParams(location.hash.slice(1)).get('token');if(t){try{sessionStorage.setItem(TK,t)}catch(e){}history.replaceState(null,'',location.pathname+location.search)}})();
+function authHdr(){let t='';try{t=sessionStorage.getItem(TK)||''}catch(e){}return t?{'Authorization':'Bearer '+t}:{}}
+async function api(p,m='GET',body){const r=await fetch(B+p,{method:m,headers:{'Content-Type':'application/json',...authHdr()},body:body?JSON.stringify(body):undefined});
+ if(!r.ok){return {error:r.status+' '+(await r.text())}}return r.json()}
+async function act(p,m,body,out){$(out).textContent='working…';const d=await api(p,m,body);$(out).textContent=JSON.stringify(d,null,2);loadStatus();loadLog();loadProducts()}
+async function loadStatus(){const s=await api('/status');const o=s.ollama||{};
+ $('st').innerHTML=o.ok?`<span class="ok">● Ollama ready</span> · ${s.model_in_use} · embeddings: ${s.embedding_backend} · queue ${s.queue_size}`:
+ `<span class="bad">● Ollama unavailable</span> — ${o.error||s.error} <span class="mut">(deterministic features still work; AI tasks are queued, never sent to a cloud API)</span>`;
+ $('net').textContent=`${s.inference_calls_logged||0} calls logged · all local: ${s.all_logged_calls_local} · cost $${(s.total_cost_usd||0).toFixed(2)}`}
+async function loadProducts(){PRODS=await api('/products');if(!Array.isArray(PRODS))PRODS=[];
+ $('products').innerHTML=PRODS.map(p=>`<b>${p.name}</b> — ${p.description} ${p.icp?'<span class="ok">ICP ✓</span>':'<span class="warn">no ICP yet</span>'}`).join('<br>')||'No products loaded yet.';
+ const sel=$('prod'),cur=sel.value;sel.innerHTML=PRODS.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');if(cur)sel.value=cur}
+async function icp(){const id=$('prod').value;if(!id)return;$('out2').textContent='generating on local model…';const d=await api(`/products/${id}/icp`,'POST');$('out2').textContent=JSON.stringify(d,null,2);loadProducts();loadStatus();loadLog()}
+async function runPipe(){const id=+$('prod').value;if(!id)return;$('pipebtn').disabled=true;$('pipemsg').textContent='Running on local model… this can take several minutes on CPU.';
+ const d=await api('/pipeline','POST',{product_id:id,max_prospects:+$('n').value});$('pipebtn').disabled=false;
+ $('pipemsg').textContent=d.error?d.error:`Done. Statuses: ${[...new Set(d.steps.flatMap(s=>[s.research,s.signals,s.problem]))].join(', ')}`;refreshRank();loadStatus();loadLog()}
+async function refreshRank(){const id=$('prod').value;if(!id)return;const r=await api('/ranking?product_id='+id);const tb=$('rank').tBodies[0];tb.innerHTML='';
+ if(!Array.isArray(r))return;r.forEach((x,i)=>{tb.insertAdjacentHTML('beforeend',`<tr><td>${i+1}</td><td>${x.company}</td><td>${x.title}</td><td>${x.total}</td><td class="tier-${x.tier}">${x.tier}</td><td><button class="s" onclick="detail(${x.prospect_id},'${x.company.replace(/'/g,'')}')">Details</button></td></tr>`)})}
+async function detail(pid,name){$('dname').textContent=name;const d=await api(`/prospects/${pid}?product_id=${$('prod').value}`);
+ const sc=d.score?JSON.parse(d.score.breakdown_json):null;
+ $('detail').textContent=JSON.stringify({research:d.prospect.research,signals:d.signals.map(s=>({type:s.signal_type,strength:s.strength,grounded:!!s.grounded,method:s.method,evidence:s.evidence})),
+  problem_statement:d.problem&&d.problem.statement,score:d.score&&{total:d.score.total,tier:d.score.tier,breakdown:sc},
+  email:d.emails[0]&&{subject:d.emails[0].subject,body:d.emails[0].body,checks:JSON.parse(d.emails[0].checks_json)}},null,2)}
+async function classify(){act('/run/reply','POST',{text:$('reply').value},'out4')}
+async function loadLog(){
+ const l=await api('/inference-log?limit=25');
+ const tb=$('log').tBodies[0];
+ tb.innerHTML='';
+ if(!Array.isArray(l)) return;
+ l.forEach(r=>{
+  const tr=document.createElement('tr');
+  const values=[
+   new Date(r.ts*1000).toLocaleTimeString(),
+   r.workflow,
+   r.endpoint,
+   r.model_served||r.model_requested,
+   String(r.prompt_tokens??'-')+'/'+String(r.completion_tokens??'-'),
+   r.tokens_per_sec??'-',
+   String(r.latency_s)+'s',
+   '$'+String(r.cost_usd)
+  ];
+  values.forEach(value=>{const td=document.createElement('td');td.textContent=String(value??'');tr.appendChild(td)});
+  const result=document.createElement('td');
+  result.className=r.success?'ok':'bad';
+  result.textContent=r.success?'✓':'✗ '+String(r.error||'').slice(0,40);
+  tr.appendChild(result);
+  tb.appendChild(tr);
+ });
+}
+(async()=>{await loadStatus();await loadProducts();await refreshRank();await loadLog();setInterval(loadStatus,15000)})();
+</script></body></html>
