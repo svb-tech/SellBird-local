@@ -1,14 +1,26 @@
 # Sellbird Local — Zero-Cost Multi-Product AI Sales Agent
 
-Fork and extension of [Harvey / Sellbird](https://github.com/ethanplusai/harvey) for the **EDXSO AI Engineer Intern — Assignment 2**.
+Fork and extension of [Harvey AI Sales Agent](https://github.com/ethanplusai/harvey) for the **EDXSO AI Engineer Intern — Assignment 2**.
 
-It turns the original project into a **fully local, multi-product AI sales agent**. All language-model inference runs on
-your own machine through [Ollama](https://ollama.com) with **Qwen3 (Apache-2.0)**. There is no OpenAI, Anthropic, Gemini,
-Codex or any other paid or hosted AI call, and there is **no cloud fallback**: if Ollama is down, the app shows a clear
-error, runs clearly labelled deterministic rules where it can, and queues the rest for later.
+It transforms the original project into a **fully local, multi-product AI sales agent**. All language-model inference runs on your own machine through [Ollama](https://ollama.com) using **Qwen3 (Apache-2.0)**.
 
-> The original upstream README is kept as [`README_UPSTREAM.md`](README_UPSTREAM.md).
-> The full technical documentation is in [`docs/TECHNICAL_DOCUMENTATION.md`](docs/TECHNICAL_DOCUMENTATION.md).
+There are no OpenAI, Anthropic, Gemini, Codex, or other paid/hosted AI inference calls, and no cloud fallback. If Ollama is unavailable, the application displays a clear error, uses clearly labelled deterministic rules where possible, and queues remaining tasks for later processing.
+
+---
+
+## Project Submission
+
+| Deliverable | Link |
+|---|---|
+| GitHub Repository | https://github.com/svb-tech/SellBird-local |
+| Demo Video (Google Drive) | [Watch Project Demo](PASTE_GOOGLE_DRIVE_LINK_HERE) |
+
+---
+
+## Documentation
+
+- [Original Upstream README](README_UPSTREAM.md)
+- [Technical Documentation](docs/TECHNICAL_DOCUMENTATION.md)
 
 ---
 
